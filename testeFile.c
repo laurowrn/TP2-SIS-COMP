@@ -1,4 +1,3 @@
-#define _OPEN_SYS_ITOA_EXT
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,10 +11,9 @@ struct file_header{
 #pragma pack (pop)
 
 int main(int argc, char **argv) {
-
-
     FILE *input;
     FILE *output;
+    struct file_header *header = (struct file_header *) malloc(sizeof(struct file_header));
     int input_size = 0;
     char input_name[256];
     char input_path[300];
@@ -24,22 +22,24 @@ int main(int argc, char **argv) {
     for(int i = 0; i < 10; i++){
         snprintf(input_name, 256, "%s%d%s", "arquivo", i, ".txt");
         snprintf(input_path, 300, "%s%s", "arquivos/", input_name);
-        input = fopen(input_path, "r");
+        input = fopen(input_path, "rb");
         fseek(input, 0L, SEEK_END);
         input_size = ftell(input);
         rewind(input);
-
         char input_message[input_size];
         fread(input_message, input_size, 1, input);
         input_message[input_size] = '\0';
         // printf("%s\n", input_message);
         fclose(input);
+        header->file_size = (unsigned int) input_size;
+        strcpy(header->name, input_name);
 
 
-        fwrite(&input_size, sizeof(int), 1, output);
-        fwrite(input_name, sizeof(input_name), 1, output);
+
+        // fwrite(&input_size, sizeof(int), 1, output);
+        // fwrite(input_name, sizeof(input_name), 1, output);
+        fwrite(header, sizeof(struct file_header), 1, output);
         fwrite(input_message, input_size + 1, 1, output);
-
     }
 
     fclose(output);
@@ -55,12 +55,13 @@ int main(int argc, char **argv) {
     while(current_position < destination_size){
         int size_received1;
         char name_received1[256];
-        fread(&size_received1, sizeof(int), 1, output);
-        current_position += (int) sizeof(int);
+
         fread(name_received1, sizeof(name_received1), 1, output);
         current_position += (int) sizeof(name_received1);
+        fread(&size_received1, sizeof(int), 1, output);
+        current_position += (int) sizeof(int);
 
-        char message_received1[size_received1 + 1];
+        char message_received1[size_received1];
         fread(message_received1, size_received1 + 1, 1, output);
         current_position += size_received1 + 1;
         message_received1[size_received1] = '\0';
@@ -71,9 +72,6 @@ int main(int argc, char **argv) {
     }
 
     fclose(output);
-
-
-
 
 
 

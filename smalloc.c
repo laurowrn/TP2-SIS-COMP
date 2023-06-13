@@ -47,7 +47,7 @@ void print_mem_block(struct mem_block *m){
 void remove_mem_block(void* p) {
     struct mem_block *targetBlock = (struct mem_block *) p;
     struct mem_block *previousBlock = mem_area;
-    struct mem_block *laterBlock;
+    struct mem_block *nextBlock;
     struct mem_block *currentBlock =  mem_area;
     int index = 0;
     while (currentBlock->mem_ptr != targetBlock->mem_ptr){
@@ -59,9 +59,9 @@ void remove_mem_block(void* p) {
         previousBlock = previousBlock->next;
     }
 
-    laterBlock = currentBlock->next;
+    nextBlock = currentBlock->next;
 
-    previousBlock->next = laterBlock;
+    previousBlock->next = nextBlock;
     free(currentBlock);
 }
 
@@ -106,7 +106,7 @@ void* smalloc(size_t size) {
 void sfree(void* p) {
     struct mem_block *targetBlock = (struct mem_block *) p;
     struct mem_block *previousBlock = mem_area;
-    struct mem_block *laterBlock;
+    struct mem_block *nextBlock;
     struct mem_block *currentBlock =  mem_area;
     int index = 0;
     while (currentBlock->mem_ptr != targetBlock->mem_ptr){
@@ -119,16 +119,16 @@ void sfree(void* p) {
             previousBlock = previousBlock->next;
         }
 
-        laterBlock = currentBlock->next;
+        nextBlock = currentBlock->next;
         int freeMemory = currentBlock->size;
 
         if(previousBlock->is_free){
             freeMemory += previousBlock->size;
             remove_mem_block((void *) previousBlock);
         }
-        if(laterBlock->is_free){
-            freeMemory += laterBlock->size;
-            remove_mem_block((void *) laterBlock);
+        if(nextBlock->is_free){
+            freeMemory += nextBlock->size;
+            remove_mem_block((void *) nextBlock);
         }
 
         currentBlock->is_free = 1;
@@ -179,6 +179,5 @@ int main(){
     // sfree(p2);
 
     // print_mem_block((struct mem_block*) mem_area);            
-
     return 0;
 }
