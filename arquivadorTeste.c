@@ -22,75 +22,54 @@ struct file_item *file_list;
 
 void archive_files(char **input_files, char *output_file, int number_of_input_files)
 {
-    // Estrutura do header do arquivo
-    struct file_header *header = (struct file_header *)malloc(sizeof(struct file_header));
+    file_list = (struct file_item *)malloc(sizeof(struct file_item));
+    file_list->header.file_size = -1;
+    file_list->next = NULL;
 
-    // Tamanho em bytes do conteudo do arquivo
     int input_size = 0;
-
-    // Nome do arquivo como uma string de 256 bytes
     char input_name[256];
-
-    // Abre para escrita o arquivo de saida
     FILE *output = fopen(output_file, "wb");
 
-    // Verifica se o arquivo existe
     if (output == NULL)
     {
         printf("O arquivo %s nao existe!\n", output_file);
     }
     else
     {
-        // Iteração sobre todos os caminhos de todos os arquivos de entrada
         for (int i = 0; i < number_of_input_files; i++)
         {
-            // Abre o arquivo de entrada atual
             FILE *input;
             input = fopen(input_files[i], "rb");
 
-            // Verifica se o arquivo de entrada existe
             if (input == NULL)
             {
                 printf("O arquivo %s nao existe!\n", input_files[i]);
             }
             else
             {
-                // Move o cursor para o final do arquivo de entrada
                 fseek(input, 0L, SEEK_END);
-
-                // Obtem a posicao atual do cursor para definir o tamanho do conteudo
                 input_size = ftell(input);
-
-                // Retorna o cursor para o início
                 rewind(input);
-
-                // Salva o conteúdo do arquivo de entrada
                 char input_message[input_size];
                 fread(input_message, input_size, 1, input);
                 input_message[input_size] = '\0';
-
-                // Fecha o arquivo de entrada
                 fclose(input);
 
-                // Salva o tamanho do arquivo em uma estrutura
                 header->file_size = (unsigned int)input_size;
 
-                // Algoritmo que extrai o nome do arquivo a partir do seu caminho
                 char *token = strtok(input_files[i], "/");
                 char last_token[256];
                 while (token != NULL)
                 {
                     strcpy(last_token, token);
+                    // printf(" %s\n", token); // printing each token
                     token = strtok(NULL, "/");
                 }
+                // printf("%s\n", last_token);
 
-                // Salva o nome do arquivo em uma estrutura
                 strcpy(header->name, last_token);
 
-                // Escreve o header no arquivo de saida
                 fwrite(header, sizeof(struct file_header), 1, output);
-
-                // Escreve o conteúdo do arquivo de entrada no arquivo de saida
                 fwrite(input_message, input_size + 1, 1, output);
             }
         }
@@ -172,7 +151,7 @@ void print_file_list()
         printf("----------------------------------------\n");
         printf("Nome do Arquivo: %s\n", current_file->header.name);
         printf("Tamanho do Arquivo: %d\n", (unsigned int)current_file->header.file_size);
-        // printf("Conteúdo: %s\n", current_file->data);
+        printf("Conteúdo: %s\n", current_file->data);
         printf("----------------------------------------\n");
         current_file = current_file->next;
     }
@@ -180,9 +159,6 @@ void print_file_list()
 
 int main(int argc, char **argv)
 {
-    file_list = (struct file_item *)malloc(sizeof(struct file_item));
-    file_list->header.file_size = -1;
-    file_list->next = NULL;
 
     // Verifique se temos os argumentos mínimos necessários
     if (argc < 2)
@@ -229,20 +205,16 @@ int main(int argc, char **argv)
     if (strcmp(opt, "-e") == 0)
     {
         char *extract_file = argv[2];
+        struct file_item *current_file_item = (struct file_item *)malloc(sizeof(struct file_item));
         FILE *current_file;
-        struct file_item *file_item = (struct file_item *)malloc(sizeof(struct file_item));
 
-        file_item = file_list;
         printf("Arquivo para extrair: %s\n", extract_file);
 
         get_file_list(extract_file);
-        while (file_item)
+        while (current_file_item)
         {
-            current_file = fopen(file_item->header.name, "w");
-            fwrite(file_item->data, file_item->header.file_size + 1, 1, current_file);
-            // printf("%s\n", file_item->data);
-            fclose(current_file);
-            file_item = file_item->next;
+            // current_file = fopen(current_file_item->header.name);
+            printf("%s\n", current_file_item->data);
         }
     }
 
