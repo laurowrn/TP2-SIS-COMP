@@ -90,28 +90,32 @@ void *smalloc(size_t size)
     return found_block_content->mem_ptr;
 }
 
-void remove_mem_block(struct mem_block *p)
+void remove_mem_block(struct mem_block *target_block)
 {
-    struct mem_block *targetBlock = p;
-    struct mem_block *previousBlock = mem_area;
-    struct mem_block *nextBlock;
-    struct mem_block *currentBlock = mem_area;
+    struct mem_block *previous_block = mem_area;
+    struct mem_block *next_block;
+    struct mem_block *current_block = mem_area;
     int index = 0;
-    while (currentBlock->mem_ptr != targetBlock->mem_ptr)
+    while (current_block != target_block)
     {
-        currentBlock = currentBlock->next;
+        current_block = current_block->next;
         index++;
     }
 
     for (int i = 0; i < index - 1; i++)
     {
-        previousBlock = previousBlock->next;
+        previous_block = previous_block->next;
     }
 
-    nextBlock = currentBlock->next;
+    printf("is_free: %d\n", previous_block->is_free);
+    printf("size: %ld\n", previous_block->size);
+    printf("mem_ptr: %p\n", previous_block->mem_ptr);
+    printf("next: %p\n", previous_block->next);
+    printf("-----------------------------\n");
 
-    previousBlock->next = nextBlock;
-    free(currentBlock);
+    next_block = current_block->next;
+
+    previous_block->next = next_block;
 }
 
 void sfree(void *p)
@@ -119,9 +123,6 @@ void sfree(void *p)
     struct mem_block *current_block = (struct mem_block *)mem_area;
     struct mem_block *previous_block = (struct mem_block *)mem_area;
     struct mem_block *next_block;
-
-    // struct mem_block *previousBlock;
-    // struct mem_block *nextBlock;
 
     int index = 0;
     while (current_block->mem_ptr != p)
@@ -138,17 +139,29 @@ void sfree(void *p)
         }
 
         next_block = current_block->next;
-        int free_memory = current_block->size + sizeof(struct mem_block);
+
+        int free_memory = current_block->size;
 
         if (previous_block->is_free)
         {
             free_memory += previous_block->size + sizeof(struct mem_block);
+            // printf("is_free: %d\n", previous_block->is_free);
+            // printf("size: %ld\n", previous_block->size);
+            // printf("mem_ptr: %p\n", previous_block->mem_ptr);
+            // printf("next: %p\n", previous_block->next);
+            // printf("-----------------------------\n");
             remove_mem_block(previous_block);
         }
+
         if (next_block->is_free)
         {
             free_memory += next_block->size + sizeof(struct mem_block);
-            // remove_mem_block(next_block);
+            // printf("is_free: %d\n", next_block->is_free);
+            // printf("size: %ld\n", next_block->size);
+            // printf("mem_ptr: %p\n", next_block->mem_ptr);
+            // printf("next: %p\n", next_block->next);
+            // printf("-----------------------------\n");
+            remove_mem_block(next_block);
         }
 
         current_block->is_free = 1;
@@ -168,8 +181,10 @@ int main()
     void *p1 = smalloc(100);
     void *p2 = smalloc(200);
     void *p3 = smalloc(500);
+    void *p4 = smalloc(600);
     sfree(p2);
-    sfree(p1);
+    sfree(p3);
+    sfree(p4);
     print_mem_block();
 
     return 0;
