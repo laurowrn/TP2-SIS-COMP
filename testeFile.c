@@ -1,132 +1,87 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
+#include <sys/stat.h>
 #include <string.h>
 
-#define MAXNAME 256
-#pragma pack(push, 1)
-struct file_header {
-    char name[MAXNAME];       // Nome do arquivo
-    unsigned long file_size;  // Tamanho do arquivo em bytes
-};
-#pragma pack(pop)
+// Function to list files in a specific directory
+char** list_files_in_directory(const char* directory, int* file_count) {
+    DIR* dir;
+    struct dirent* entry;
+    int count = 0;
 
-int main(int argc, char **argv) {
-    // Coloca o arquivo de entrada no arquivo de saída
-    struct file_header *header = (struct file_header *)malloc(sizeof(struct file_header));
+    // Open the specified directory
+    dir = opendir(directory);
 
-    FILE *output = fopen("arquivo_saida", "wb");
-    FILE *input1 = fopen("arquivos/arquivo0.txt", "rb");
+    if (dir == NULL) {
+        printf("Failed to open the directory.\n");
+        return NULL;
+    }
 
-    fseek(input1, 0L, SEEK_END);
-    long input_size1 = ftell(input1);
-    rewind(input1);
+    // Count the number of files in the directory
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_REG) { // Check if it's a regular file
+            count++;
+        }
+    }
 
-    char *input_message1 = malloc(input_size1);
-    size_t bytes_read = fread(input_message1, 1, input_size1, input1);
+    // Allocate memory for the array of strings
+    char** file_paths = (char**)malloc(count * sizeof(char*));
+    if (file_paths == NULL) {
+        printf("Failed to allocate memory.\n");
+        return NULL;
+    }
 
-    header->file_size = (unsigned long)input_size1;
-    strcpy(header->name, "arquivo0.txt");
+    // Reset the directory pointer to the beginning
+    rewinddir(dir);
 
-    // Escreve o header no arquivo de saida
-    fwrite(header, sizeof(struct file_header), 1, output);
+    int i = 0;
+    // Store the file paths in the array
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_REG) { // Check if it's a regular file
+            char* file_path = (char*)malloc((strlen(directory) + strlen(entry->d_name) + 2) * sizeof(char));
+            sprintf(file_path, "%s/%s", directory, entry->d_name);
+            file_paths[i] = file_path;
+            i++;
+        }
+    }
 
-    // Escreve o conteúdo do arquivo de entrada no arquivo de saida
-    fwrite(input_message1, bytes_read, 1, output);
+    // Set the number of files found
+    *file_count = count;
 
-    free(input_message1);
+    // Close the directory
+    closedir(dir);
 
-    fclose(input1);
+    return file_paths;
+}
 
-    FILE *input2 = fopen("arquivos/arquivo1.txt", "rb");
-    fseek(input2, 0L, SEEK_END);
+// Function to free the memory allocated by the array of strings
+void free_string_array(char** array, int size) {
+    if (array == NULL) {
+        return;
+    }
 
-    // Obtem a posicao atual do cursor para definir o tamanho do conteudo
-    long input_size2 = ftell(input2);
+    for (int i = 0; i < size; i++) {
+        free(array[i]);
+    }
 
-    rewind(input2);
+    free(array);
+}
 
-    char *input_message2 = malloc(input_size2);
-    bytes_read = fread(input_message2, 1, input_size2, input2);
+int main() {
+    const char* directory = "parte2_arquivador/arquivos"; // Replace with the desired directory
 
-    header->file_size = (unsigned long)input_size2;
+    int file_count;
+    char** file_paths = list_files_in_directory(directory, &file_count);
 
-    // Salva o nome do arquivo em uma estrutura
-    strcpy(header->name, "arquivo1.txt");
+    if (file_paths != NULL) {
+        printf("Files found in the directory '%s':\n", directory);
+        for (int i = 0; i < file_count; i++) {
+            printf("%s\n", file_paths[i]);
+        }
 
-    // Escreve o header no arquivo de saida
-    fwrite(header, sizeof(struct file_header), 1, output);
+        free_string_array(file_paths, file_count);
+    }
 
-    // Escreve o conteúdo do arquivo de entrada no arquivo de saida
-    fwrite(input_message2, bytes_read, 1, output);
-
-    free(input_message2);
-    fclose(input2);
-
-    // FILE *input3 = fopen("arquivos/arquivo2.txt", "rb");
-    // fseek(input3, 0L, SEEK_END);
-
-    // // Obtem a posicao atual do cursor para definir o tamanho do conteudo
-    // int input_size3 = ftell(input3);
-
-    // rewind(input3);
-
-    // char *input_message3 = malloc(input_size3);
-    // fread(input_message3, input_size3, 1, input3);
-
-    // header->file_size = (unsigned int)input_size3;
-
-    // // Salva o nome do arquivo em uma estrutura
-    // strcpy(header->name, "arquivo2.txt");
-
-    // // Escreve o header no arquivo de saida
-    // fwrite(header, sizeof(struct file_header), 1, output);
-
-    // // Escreve o conteúdo do arquivo de entrada no arquivo de saida
-    // fwrite(input_message3, input_size3, 1, output);
-
-    // fclose(input3);
-
-    fclose(output);
-
-    output = fopen("arquivo_saida", "rb");
-    FILE *input1_out = fopen("arquivo0.txt", "wb");
-
-    char name_received1[MAXNAME];
-    unsigned long size_received1;
-    fread(name_received1, sizeof(char), MAXNAME, output);
-    fread(&size_received1, sizeof(unsigned long), 1, output);
-
-    char *message_received1 = malloc(size_received1);
-    bytes_read = fread(message_received1, 1, size_received1, output);
-
-    fwrite(message_received1, bytes_read, 1, input1_out);
-
-    printf("%s\n", name_received1);
-    printf("%lu\n", size_received1);
-    printf("%s\n", message_received1);
-
-    fclose(input1_out);
-    free(message_received1);
-
-    FILE *input2_out = fopen("arquivo1.txt", "wb");
-
-    char name_received2[MAXNAME];
-    unsigned long size_received2;
-    fread(name_received2, sizeof(char), MAXNAME, output);
-    fread(&size_received2, sizeof(unsigned long), 1, output);
-
-    char *message_received2 = malloc(size_received1);
-    bytes_read = fread(message_received2, 1, size_received2, output);
-
-    fwrite(message_received2, bytes_read, 1, input2_out);
-
-    printf("%s\n", name_received2);
-    printf("%lu\n", size_received2);
-    printf("%s\n", message_received2);
-
-    fclose(input2_out);
-    free(message_received2);
-
-    fclose(output);
-    free(header);
+    return 0;
 }
