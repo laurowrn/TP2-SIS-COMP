@@ -97,6 +97,12 @@ void get_file_list(char *output_file) {
         int destination_size = ftell(output);
         rewind(output);
 
+        printf("%d\n", destination_size);
+
+        char every_file[destination_size];
+        fread(every_file, destination_size, 1, output);
+        printf("Arquivo completo: %s\n", every_file);
+
         int current_position = 0;
         while (current_position < destination_size) {
             int size_received;
@@ -107,33 +113,38 @@ void get_file_list(char *output_file) {
             fread(&size_received, sizeof(int), 1, output);
             current_position += (int)sizeof(int);
 
-            char message_received[size_received - 1];
-            current_position += size_received + 1;
-            fread(message_received, size_received - 1, 1, output);
+            char message_received[size_received];
+            current_position += size_received;
+            fread(message_received, size_received, 1, output);
             // message_received[size_received] = '\0';
             // printf("%s\n", message_received);
 
-            if (file_list->header.file_size == -1) {
-                file_list->header.file_size = (unsigned int)size_received;
-                strcat(file_list->header.name, name_received);
-                file_list->data = malloc(size_received + 1);
-                strcat(file_list->data, message_received);
-            } else {
-                struct file_item *last_file = (struct file_item *)malloc(sizeof(struct file_item));
-                struct file_item *current_file = (struct file_item *)malloc(sizeof(struct file_item));
-                current_file->next = NULL;
-                current_file->header.file_size = size_received;
-                strcat(current_file->header.name, name_received);
+            printf("----------------------------------------\n");
+            printf("Nome do Arquivo: %s\n", name_received);
+            printf("Tamanho do Arquivo: %d\n", (unsigned int)size_received);
+            printf("Conteúdo: %s\n", message_received);
 
-                current_file->data = malloc(size_received + 1);
-                strcat(current_file->data, message_received);
+            // if (file_list->header.file_size == -1) {
+            //     file_list->header.file_size = (unsigned int)size_received;
+            //     strcpy(file_list->header.name, name_received);
+            //     file_list->data = malloc(size_received + 1);
+            //     strcat(file_list->data, message_received);
+            // } else {
+            //     struct file_item *last_file = (struct file_item *)malloc(sizeof(struct file_item));
+            //     struct file_item *current_file = (struct file_item *)malloc(sizeof(struct file_item));
+            //     current_file->next = NULL;
+            //     current_file->header.file_size = size_received;
+            //     strcat(current_file->header.name, name_received);
 
-                last_file = file_list;
-                while (last_file->next) {
-                    last_file = last_file->next;
-                }
-                last_file->next = current_file;
-            }
+            //     current_file->data = malloc(size_received + 1);
+            //     strcat(current_file->data, message_received);
+
+            //     last_file = file_list;
+            //     while (last_file->next) {
+            //         last_file = last_file->next;
+            //     }
+            //     last_file->next = current_file;
+            // }
         }
     }
     fclose(output);

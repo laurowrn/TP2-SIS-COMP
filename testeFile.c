@@ -1,190 +1,96 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h>
 
 #define MAXNAME 256
 #pragma pack(push, 1)
-struct file_header
-{
-    char name[MAXNAME];     // Nome do arquivo
-    unsigned int file_size; // Tamanho do arquivo em bytes
+struct file_header {
+    char name[MAXNAME];      // Nome do arquivo
+    unsigned int file_size;  // Tamanho do arquivo em bytes
 };
 #pragma pack(pop)
 
-int main(int argc, char **argv)
-{
-    DIR *d;
-    struct dirent *dir;
-    d = opendir("./arquivos");
-    if (d)
-    {
-        while ((dir = readdir(d)) != NULL)
-        {
-            printf("%s\n", dir->d_name);
-        }
-        closedir(d);
-    }
+int main(int argc, char **argv) {
+    // Coloca o arquivo de entrada no arquivo de saída
+    struct file_header *header = (struct file_header *)malloc(sizeof(struct file_header));
 
-    // FILE *input;
-    // FILE *output;
-    // struct file_header *header = (struct file_header *)malloc(sizeof(struct file_header));
-    // int input_size = 0;
-    // char input_name[256];
-    // char input_path[300];
-    // char output_path[300] = "arquivo_saida.txt";
-    // output = fopen(output_path, "wb");
-    // for (int i = 0; i < 10; i++)
-    // {
-    //     snprintf(input_name, 256, "%s%d%s", "arquivo", i, ".txt");
-    //     snprintf(input_path, 300, "%s%s", "arquivos/", input_name);
-    //     input = fopen(input_path, "rb");
-    //     fseek(input, 0L, SEEK_END);
-    //     input_size = ftell(input);
-    //     rewind(input);
-    //     char input_message[input_size];
-    //     fread(input_message, input_size, 1, input);
-    //     input_message[input_size] = '\0';
-    //     // printf("%s\n", input_message);
-    //     fclose(input);
-    //     header->file_size = (unsigned int)input_size;
-    //     strcpy(header->name, input_name);
+    FILE *output = fopen("arquivo_saida", "wb");
+    FILE *input1 = fopen("arquivos/arquivo0.txt", "rb");
 
-    //     // fwrite(&input_size, sizeof(int), 1, output);
-    //     // fwrite(input_name, sizeof(input_name), 1, output);
-    //     fwrite(header, sizeof(struct file_header), 1, output);
-    //     fwrite(input_message, input_size + 1, 1, output);
-    // }
+    fseek(input1, 0L, SEEK_END);
 
-    // fclose(output);
+    // Obtem a posicao atual do cursor para definir o tamanho do conteudo
+    int input_size = ftell(input1);
 
-    // output = fopen(output_path, "rb");
-    // fseek(output, 0L, SEEK_END);
-    // int destination_size = ftell(output);
-    // rewind(output);
+    rewind(input1);
 
-    // // printf("%d\n", destination_size);
+    char input_message1[input_size];
+    fread(input_message1, input_size, 1, input1);
 
-    // int current_position = 0;
-    // while (current_position < destination_size)
-    // {
-    //     int size_received1;
-    //     char name_received1[256];
+    header->file_size = (unsigned int)input_size;
 
-    //     fread(name_received1, sizeof(name_received1), 1, output);
-    //     current_position += (int)sizeof(name_received1);
-    //     fread(&size_received1, sizeof(int), 1, output);
-    //     current_position += (int)sizeof(int);
+    // Salva o nome do arquivo em uma estrutura
+    strcpy(header->name, "arquivo0.txt");
 
-    //     char message_received1[size_received1];
-    //     fread(message_received1, size_received1 + 1, 1, output);
-    //     current_position += size_received1 + 1;
-    //     message_received1[size_received1] = '\0';
+    // Escreve o header no arquivo de saida
+    fwrite(header, sizeof(struct file_header), 1, output);
 
-    //     printf("%d\n", size_received1);
-    //     printf("%s\n", name_received1);
-    //     // printf("%s\n", message_received1);
-    // }
+    // Escreve o conteúdo do arquivo de entrada no arquivo de saida
+    fwrite(input_message1, input_size, 1, output);
 
-    // fclose(output);
+    printf("Tamanho: %d\n", input_size);
 
-    // FILE *input1 = fopen("origem1.txt", "r");
-    // fseek(input1, 0L, SEEK_END);
-    // int input_size1 = ftell(input1);
-    // rewind(input1);
+    fseek(input1, 0L, SEEK_END);
 
-    // char input_message1[input_size1];
-    // fread(input_message1, input_size1, 1, input1);
+    // Obtem a posicao atual do cursor para definir o tamanho do conteudo
+    input_size = ftell(input1);
 
-    // fclose(input1);
+    rewind(input1);
 
-    // char name1[256] = "arquivo.txt";
+    char input_message2[input_size];
+    fread(input_message2, input_size, 1, input1);
 
-    // FILE *input2 = fopen("origem2.txt", "r");
-    // fseek(input2, 0L, SEEK_END);
-    // int input_size2 = ftell(input2);
-    // rewind(input2);
+    header->file_size = (unsigned int)input_size;
 
-    // char input_message2[input_size2];
-    // fread(input_message2, input_size2, 1, input2);
+    // Salva o nome do arquivo em uma estrutura
+    strcpy(header->name, "arquivo1.txt");
 
-    // fclose(input2);
+    // Escreve o header no arquivo de saida
+    fwrite(header, sizeof(struct file_header), 1, output);
 
-    // char name2[256] = "arquivo.txt";
+    // Escreve o conteúdo do arquivo de entrada no arquivo de saida
+    fwrite(input_message2, input_size, 1, output);
 
-    // FILE *destination_file;
-    // destination_file = fopen ("arquivo_saida.txt", "wb");
+    fclose(input1);
+    fclose(output);
 
-    // fwrite(&input_size1, sizeof(int), 1, destination_file);
-    // fwrite(name1, sizeof(name1), 1, destination_file);
-    // fwrite(input_message1, input_size1 + 1, 1, destination_file);
+    output = fopen("arquivo_saida", "rb");
+    input1 = fopen("arquivo0.txt", "wb");
 
-    // fwrite(&input_size2, sizeof(int), 1, destination_file);
-    // fwrite(name2, sizeof(name2), 1, destination_file);
-    // fwrite(input_message2, input_size2 + 1, 1, destination_file);
+    char name_received[256];
+    int size_received;
+    char message_received[size_received];
 
-    // fclose(destination_file);
+    fread(name_received, sizeof(name_received), 1, output);
+    fread(&size_received, sizeof(unsigned int), 1, output);
+    fread(message_received, size_received, 1, output);
 
-    // destination_file = fopen ("data.txt", "rb");
-    // fseek(destination_file, 0L, SEEK_END);
-    // int destination_size = ftell(destination_file);
-    // rewind(destination_file);
+    fwrite(message_received, size_received, 1, input1);
 
-    // int size_received1;
-    // char name_received1[256];
-    // fread(&size_received1, sizeof(int), 1, destination_file);
-    // fread(name_received1, sizeof(name_received1), 1, destination_file);
+    printf("%s\n", name_received);
+    printf("%d\n", size_received);
+    printf("%s\n", message_received);
 
-    // char message_received1[size_received1 + 1];
-    // fread(message_received1, size_received1 + 1, 1, destination_file);
-    // message_received1[size_received1] = '\0';
+    fread(name_received, sizeof(name_received), 1, output);
+    fread(&size_received, sizeof(unsigned int), 1, output);
+    fread(message_received, size_received, 1, output);
 
-    // printf("%d\n", size_received1);
-    // printf("%s\n", name_received1);
-    // printf("%s\n", message_received1);
+    fwrite(message_received, size_received, 1, input1);
 
-    // int size_received2;
-    // char name_received2[256];
-    // fread(&size_received2, sizeof(int), 1, destination_file);
-    // fread(name_received2, sizeof(name_received2), 1, destination_file);
+    printf("%s\n", name_received);
+    printf("%d\n", size_received);
+    printf("%s\n", message_received);
 
-    // char message_received2[size_received2 + 1];
-    // fread(message_received2, size_received2 + 1, 1, destination_file);
-    // message_received2[size_received2] = '\0';
-
-    // printf("%d\n", size_received2);
-    // printf("%s\n", name_received2);
-    // printf("%s\n", message_received2);
-
-    // fclose(destination_file);
-
-    // printf("%d\n", destination_size);
-
-    // destination_file = fopen ("arquivo_saida.txt", "rb");
-    // fseek(destination_file, 0L, SEEK_END);
-    // int destination_size = ftell(destination_file);
-    // rewind(destination_file);
-
-    // printf("%d\n", destination_size);
-
-    // int current_position = 0;
-    // while(current_position < destination_size){
-    //     int size_received1;
-    //     char name_received1[256];
-    //     fread(&size_received1, sizeof(int), 1, destination_file);
-    //     current_position += (int) sizeof(int);
-    //     fread(name_received1, sizeof(name_received1), 1, destination_file);
-    //     current_position += (int) sizeof(name_received1);
-
-    //     char message_received1[size_received1 + 1];
-    //     fread(message_received1, size_received1 + 1, 1, destination_file);
-    //     current_position += size_received1 + 1;
-    //     message_received1[size_received1] = '\0';
-
-    //     printf("%d\n", size_received1);
-    //     printf("%s\n", name_received1);
-    //     printf("%s\n", message_received1);
-    // }
-
-    // fclose(destination_file);
+    fclose(output);
+    fclose(input1);
 }
