@@ -15,11 +15,17 @@ struct file_header {
 void archive_files(char **input_files, char *output_file, int number_of_input_files) {
     struct file_header *header = (struct file_header *)malloc(sizeof(struct file_header));
     FILE *output = fopen(output_file, "wb");
+
     FILE *input;
     size_t bytes_read;
 
     for (int i = 0; i < number_of_input_files; i++) {
         input = fopen(input_files[i], "rb");
+
+        if (input == NULL) {
+            printf("Arquivo %s não encontrado!\n", input_files[i]);
+            return;
+        }
 
         fseek(input, 0L, SEEK_END);
         unsigned long input_size = ftell(input);
@@ -57,9 +63,9 @@ void archive_files(char **input_files, char *output_file, int number_of_input_fi
 void extract_all_files(char *file_path) {
     FILE *file = fopen(file_path, "rb");
 
-    if(file == NULL){
+    if (file == NULL) {
         printf("Arquivo não encontrado!\n");
-        return 0;
+        return;
     }
 
     FILE *new_file;
@@ -71,7 +77,7 @@ void extract_all_files(char *file_path) {
 
     unsigned long total_size;
     unsigned long current_position = 0;
-    ;
+
     fseek(file, 0L, SEEK_END);
     total_size = ftell(file);
     rewind(file);

@@ -83,6 +83,11 @@ void archive_files(char **input_files, char *output_file, int number_of_input_fi
     for (int i = 0; i < number_of_input_files; i++) {
         input = fopen(input_files[i], "rb");
 
+        if (input == NULL) {
+            printf("Arquivo %s não encontrado!\n", input_files[i]);
+            return;
+        }
+
         fseek(input, 0L, SEEK_END);
         unsigned long input_size = ftell(input);
         rewind(input);
