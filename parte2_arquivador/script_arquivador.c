@@ -12,68 +12,6 @@ struct file_header {
 };
 #pragma pack(pop)
 
-char **list_files_in_directory(const char *directory, int *file_count) {
-    DIR *dir;
-    struct dirent *entry;
-    int count = 0;
-
-    // Open the specified directory
-    dir = opendir(directory);
-
-    if (dir == NULL) {
-        printf("Failed to open the directory.\n");
-        return NULL;
-    }
-
-    // Count the number of files in the directory
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_REG) {  // Check if it's a regular file
-            count++;
-        }
-    }
-
-    // Allocate memory for the array of strings
-    char **file_paths = (char **)malloc(count * sizeof(char *));
-    if (file_paths == NULL) {
-        printf("Failed to allocate memory.\n");
-        return NULL;
-    }
-
-    // Reset the directory pointer to the beginning
-    rewinddir(dir);
-
-    int i = 0;
-    // Store the file paths in the array
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_REG) {  // Check if it's a regular file
-            char *file_path = (char *)malloc((strlen(directory) + strlen(entry->d_name) + 2) * sizeof(char));
-            sprintf(file_path, "%s/%s", directory, entry->d_name);
-            file_paths[i] = file_path;
-            i++;
-        }
-    }
-
-    // Set the number of files found
-    *file_count = count;
-
-    // Close the directory
-    closedir(dir);
-
-    return file_paths;
-}
-
-void free_string_array(char **array, int size) {
-    if (array == NULL) {
-        return;
-    }
-
-    for (int i = 0; i < size; i++) {
-        free(array[i]);
-    }
-
-    free(array);
-}
-
 void archive_files(char **input_files, char *output_file, int number_of_input_files) {
     struct file_header *header = (struct file_header *)malloc(sizeof(struct file_header));
     FILE *output = fopen(output_file, "wb");
@@ -118,6 +56,12 @@ void archive_files(char **input_files, char *output_file, int number_of_input_fi
 
 void extract_all_files(char *file_path) {
     FILE *file = fopen(file_path, "rb");
+
+    if(file == NULL){
+        printf("Arquivo não encontrado!\n");
+        return 0;
+    }
+
     FILE *new_file;
     size_t bytes_read;
 
@@ -213,7 +157,6 @@ int main(int argc, char **argv) {
     if (argc < 2) {
         printf("Uso:\n");
         printf("\t%s -c <arquivo_de_saida> <arquivo1> <arquivo2> ... <arquivoN> - Cria arquivo.\n", argv[0]);
-        printf("\t%s -cd <arquivo_de_saida> <diretorio> - Cria arquivo a partir do diretorio.\n", argv[0]);
         printf("\t%s -l - Lista arquivos.\n", argv[0]);
         printf("\t%s -e <arquivo> - Extrai conteúdo.\n", argv[0]);
         return 1;
@@ -242,23 +185,6 @@ int main(int argc, char **argv) {
         }
 
         archive_files(input_files, output_file, number_of_input_files);
-
-        return 0;
-    }
-
-    if (strcmp(opt, "-ca") == 0) {
-        char *output_file = argv[2];
-        char *directory = argv[3];
-        int number_of_input_files;
-        char **input_files = list_files_in_directory(directory, &number_of_input_files);
-
-        printf("Arquivo de saída: %s\n", output_file);
-        for (int i = 0; i < number_of_input_files; i++) {
-            printf("Arquivo de entrada %d: %s\n", i, input_files[i]);
-        }
-
-        archive_files(input_files, output_file, number_of_input_files);
-        free_string_array(input_files, number_of_input_files);
 
         return 0;
     }
